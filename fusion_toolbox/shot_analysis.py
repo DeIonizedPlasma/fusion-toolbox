@@ -2,7 +2,7 @@ def smooth(data):
     """Smooth the data to remove noise
 
     Args:
-        data (_type_): _description_
+        data (_type_): blablabla
     """
     pass
 
