@@ -38,11 +38,12 @@ class Coil:
         for i,pt in enumerate(self.pts[:-1]): #Skip last point because it repeats
             B_out += self.BGreen(xyz,pt,drs[i])
 
-        return B_out
+        return B_out*self.I
 
     def BGreen(self, xyz_samples, xyz_center, dl):
         """Evaluates the B field at all sample locations due to a wire segment. Uses the formula:
         dB = mu_0/4pi * I * dl x (r-r_0)/|r-r_0|^3
+        The current I 
 
         Parameters
         ----------
@@ -58,8 +59,9 @@ class Coil:
         """
         _r = xyz_samples - xyz_center[None,:]
         Bvecs = np.cross(dl,_r)/np.linalg.norm(_r,axis=1)[:,None]**3
-        return 1e-7 * self.I * Bvecs #mu_0/4pi = 1e-7 H/m
-    def plot(self):
+        return 1e-7 * Bvecs #mu_0/4pi = 1e-7 H/m
+
+    def plot_contour(self):
         """
         Displays a 3D plot of the coil
         """
@@ -79,6 +81,25 @@ class Coil:
         limits = np.array([getattr(ax, f'get_{axis}lim')() for axis in 'xyz'])
         ax.set_box_aspect(np.ptp(limits, axis = 1))
 
+        plt.show()
+    def plot_B_slice(self,axis,r,w1,w2,n1,n2):
+        ax = plt.figure().add_subplot()
+        #ax = plt.figure().add_subplot(projection='3d')
+        X,Y,Z = gen_plane_pts(axis,r,w1,w2,n1,n2)
+        if axis==0:
+            C1,C2 = Y,Z
+        elif axis==1:
+            C1,C2 = X,Z
+        elif axis==2:
+            C1,C2 = X,Y
+        Bpts = np.vstack((X.ravel(),Y.ravel(),Z.ravel())).T
+        B_samples = self.B(Bpts).T
+        B_clean = np.delete(B_samples,axis,axis=0).T
+        B_2D = np.zeros((n2,n1,2))
+        for i,B in enumerate(B_clean):
+            B_2D[(i//n1)%n2,i%n1] = B
+        ax.streamplot(C1,C2,B_2D[:,:,0],B_2D[:,:,1],density=1.5)
+        ax.set_aspect(1)
         plt.show()
 
 class PFCoil(Coil):
@@ -181,3 +202,38 @@ print(field)
 
 #coils = CMod.make_PFset(4,1,1)
 #coils = CMod.make_PFset(4,-1,1)
+def gen_plane_pts(axis,r,w1,w2,n1,n2):
+    """
+    Generates a 2D grid of points on a plane in 3D which is normal to one of the three axes.
+
+    Parameters
+    ----------
+    axis : int
+        Which axis the plane should be normal to. Valid values are 0, 1, or 2 for x, y, or z.
+    r : np.ndarray of shape (3)
+        Displacement from origin of the center of the plane
+    w1 : float
+        Physical width of first dimension of grid
+    w2 : float
+        Physical width of second dimension of grid
+    n1 : int
+        Number of grid points along side 1 of the grid.
+    n2 : int
+        Number of grid points along side 2 of the grid.
+    """
+    if axis==0:
+        yspan = np.linspace(r[1]-w1/2,r[1]+w1/2,n1)
+        zspan = np.linspace(r[2]-w2/2,r[2]+w2/2,n2)
+        Y,Z = np.meshgrid(yspan,zspan)
+        X = np.zeros_like(Y)
+    elif axis==1:
+        xspan = np.linspace(r[1]-w1/2,r[1]+w1/2,n1)
+        zspan = np.linspace(r[2]-w2/2,r[2]+w2/2,n2)
+        X,Z = np.meshgrid(xspan,zspan)
+        Y = np.zeros_like(Z)
+    elif axis==2:
+        xspan = np.linspace(r[1]-w1/2,r[1]+w1/2,n1)
+        yspan = np.linspace(r[2]-w2/2,r[2]+w2/2,n2)
+        X,Y = np.meshgrid(xspan,yspan)
+        Z = np.zeros_like(X)
+    return X,Y,Z
