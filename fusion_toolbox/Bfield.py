@@ -165,7 +165,6 @@ class Tokamak:
         for i in range(N):
             self.coils.append(PFCoil(R[i],Z[i],I[i]))
         
-
     def make_TFset(self,phi,I):
         """
         Adds in a set of TF coils given a list of their toroidal angle phi and currents.
@@ -182,26 +181,6 @@ class Tokamak:
         for i in range(N):
             self.coils.append(TFCoil(self.R,self.a,phi[i],I[i]))
 
-'''
-thetas = np.linspace(0,2*np.pi,100)
-X = 1*np.cos(thetas)
-Y = 1*np.sin(thetas)
-Z = 0*X
-XYZ = np.vstack((X,Y,Z)).T
-
-a = Coil(XYZ,1)
-field = a.B(np.array([[0,0,0],[0,1,2]]))
-print(field)
-'''
-
-a = PFCoil(1,0,1)
-field = a.B(np.array([[0,0,0],[0,1,2]]))
-print(field)
-
-#CMod = Tokamak(4,1)
-
-#coils = CMod.make_PFset(4,1,1)
-#coils = CMod.make_PFset(4,-1,1)
 def gen_plane_pts(axis,r,w1,w2,n1,n2):
     """
     Generates a 2D grid of points on a plane in 3D which is normal to one of the three axes.
